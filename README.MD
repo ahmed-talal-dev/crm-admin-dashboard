@@ -6,6 +6,28 @@ The project focuses on reusable UI components, resource-based routing, GraphQL d
 
 ---
 
+## Live Demo
+
+🔗 [View Live Demo](https://crm-admin-dashboard-new.vercel.app)
+
+## Screenshots
+
+### Dashboard
+
+![Dashboard](./public/screenshots/dashboard.png.png)
+
+### Kanban Task Board
+
+![Kanban Task Board](./public/screenshots/kanban.png.png)
+
+### Companies Management
+
+![Companies Management](./public/screenshots/companies.png.png)
+
+### Login
+
+![Login](./public/screenshots/login.png.png)
+
 ## Features
 
 - Dashboard overview with companies, contacts, and deals statistics
