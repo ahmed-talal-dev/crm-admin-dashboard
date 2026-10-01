@@ -1,58 +1,164 @@
 import type { AuthProvider } from "@refinedev/core";
-import { TOKEN_KEY } from "./constants";
+
+import { API_URL, dataProvider } from "./data";
+
+export const authCredentials = {
+  email: "michael.scott@dundermifflin.com",
+  password: "demodemo",
+};
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  jobTitle: string;
+  timezone: string;
+  avatarUrl: string;
+}
 
 export const authProvider: AuthProvider = {
-  login: async ({ username, email, password }) => {
-    if ((username || email) && password) {
-      localStorage.setItem(TOKEN_KEY, username);
+  /**
+   * Authenticates the user against the GraphQL API
+   * and stores the returned access token locally.
+   */
+  login: async ({ email }) => {
+    try {
+      const { data } = await dataProvider.custom({
+        url: API_URL,
+        method: "post",
+        headers: {},
+        meta: {
+          variables: { email },
+          rawQuery: `
+            mutation Login($email: String!) {
+              login(loginInput: { email: $email }) {
+                accessToken
+              }
+            }
+          `,
+        },
+      });
+
+      localStorage.setItem("access_token", data.login.accessToken);
+
       return {
         success: true,
         redirectTo: "/",
       };
-    }
+    } catch (error) {
+      const authError = error as Error;
 
-    return {
-      success: false,
-      error: {
-        name: "LoginError",
-        message: "Invalid username or password",
-      },
-    };
+      return {
+        success: false,
+        error: {
+          name: authError.name || "Login Error",
+          message: authError.message || "Login failed",
+        },
+      };
+    }
   },
+
+  /**
+   * Clears the current access token and redirects
+   * the user back to the login page.
+   */
   logout: async () => {
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("access_token");
+
     return {
       success: true,
       redirectTo: "/login",
     };
   },
-  check: async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
+
+  /**
+   * Forces a logout when the API reports
+   * that the current authentication is invalid.
+   */
+  onError: async (error) => {
+    if (error.statusCode === "UNAUTHENTICATED") {
       return {
-        authenticated: true,
+        logout: true,
+        ...error,
       };
     }
 
     return {
-      authenticated: false,
-      redirectTo: "/login",
+      error,
     };
   },
-  getPermissions: async () => null,
-  getIdentity: async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
+
+  /**
+   * Verifies that the current session is still valid.
+   */
+  check: async () => {
+    try {
+      await dataProvider.custom({
+        url: API_URL,
+        method: "post",
+        headers: {},
+        meta: {
+          rawQuery: `
+            query Me {
+              me {
+                name
+              }
+            }
+          `,
+        },
+      });
+
       return {
-        id: 1,
-        name: "John Doe",
-        avatar: "https://i.pravatar.cc/300",
+        authenticated: true,
+        redirectTo: "/",
+      };
+    } catch {
+      return {
+        authenticated: false,
+        redirectTo: "/login",
       };
     }
-    return null;
   },
-  onError: async (error) => {
-    console.error(error);
-    return { error };
+
+  /**
+   * Retrieves the profile of the currently
+   * authenticated user.
+   */
+  getIdentity: async () => {
+    const accessToken = localStorage.getItem("access_token");
+
+    try {
+      const { data } = await dataProvider.custom<{
+        me: User;
+      }>({
+        url: API_URL,
+        method: "post",
+        headers: accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`,
+            }
+          : {},
+        meta: {
+          rawQuery: `
+            query Me {
+              me {
+                id
+                name
+                email
+                phone
+                jobTitle
+                timezone
+                avatarUrl
+              }
+            }
+          `,
+        },
+      });
+
+      return data.me;
+    } catch {
+      return undefined;
+    }
   },
 };
