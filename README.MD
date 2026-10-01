@@ -14,19 +14,19 @@ The project focuses on reusable UI components, resource-based routing, GraphQL d
 
 ### Dashboard
 
-![Dashboard](./public/screenshots/dashboard.png.png)
+![Dashboard](./public/screenshots/dashboard.png)
 
 ### Kanban Task Board
 
-![Kanban Task Board](./public/screenshots/kanban.png.png)
+![Kanban Task Board](./public/screenshots/kanban.png)
 
 ### Companies Management
 
-![Companies Management](./public/screenshots/companies.png.png)
+![Companies Management](./public/screenshots/companies.png)
 
 ### Login
 
-![Login](./public/screenshots/login.png.png)
+![Login](./public/screenshots/login.png)
 
 ## Features
 
